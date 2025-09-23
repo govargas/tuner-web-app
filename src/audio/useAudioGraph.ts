@@ -1,83 +1,98 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 declare global {
   interface Window {
-    webkitAudioContext?: typeof AudioContext;
+    webkitAudioContext?: typeof AudioContext
   }
 }
 
-export function useAudioGraph() {
-  const ctxRef = useRef<AudioContext | null>(null);
-  const srcRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const [ready, setReady] = useState(false);
-  const [running, setRunning] = useState(false);
+export function useAudioGraph(deviceId?: string) {
+  const ctxRef = useRef<AudioContext | null>(null)
+  const srcRef = useRef<MediaStreamAudioSourceNode | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const [ready, setReady] = useState(false)
+  const [running, setRunning] = useState(false)
 
   const start = useCallback(async () => {
-    if (running) return;
+    if (running) return
 
     // 1) Request mic with processing disabled (better for pitch detection)
-    let stream: MediaStream;
+    let stream: MediaStream
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
         },
-      });
+      })
     } catch (err) {
-      console.warn("Microphone permission or device error:", err);
-      return;
+      console.warn('Microphone permission or device error:', err)
+      return
     }
 
     // 2) Create/resume AudioContext (iOS may start as "suspended")
-    const Ctor = window.AudioContext || window.webkitAudioContext!;
-    const ctx = new Ctor();
-    if (ctx.state === "suspended") {
+    const Ctor = window.AudioContext || window.webkitAudioContext!
+    const ctx = new Ctor()
+    if (ctx.state === 'suspended') {
       try {
-        await ctx.resume();
+        await ctx.resume()
       } catch (err) {
-        console.warn("AudioContext resume failed:", err);
+        console.warn('AudioContext resume failed:', err)
       }
     }
 
     // 3) Wire source → analyser
-    const src = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 2048;
-    src.connect(analyser);
+    const src = ctx.createMediaStreamSource(stream)
+    const analyser = ctx.createAnalyser()
+    analyser.fftSize = 2048
+    src.connect(analyser)
 
     // 4) Publish refs + flags
-    ctxRef.current = ctx;
-    srcRef.current = src;
-    analyserRef.current = analyser;
-    setReady(true);
-    setRunning(true);
-  }, [running]);
+    ctxRef.current = ctx
+    srcRef.current = src
+    analyserRef.current = analyser
+    setReady(true)
+    setRunning(true)
+  }, [running, deviceId])
 
   const stop = useCallback(() => {
-    setRunning(false);
-    setReady(false);
+    setRunning(false)
+    setReady(false)
 
     // Stop media tracks (releases mic permission light)
     try {
-      srcRef.current?.mediaStream.getTracks().forEach((t) => t.stop());
+      srcRef.current?.mediaStream.getTracks().forEach((t) => t.stop())
     } catch {
       /* noop */
     }
 
     // Close context
     try {
-      ctxRef.current?.close();
+      ctxRef.current?.close()
     } catch {
       /* noop */
     }
 
-    ctxRef.current = null;
-    srcRef.current = null;
-    analyserRef.current = null;
-  }, []);
+    ctxRef.current = null
+    srcRef.current = null
+    analyserRef.current = null
+  }, [])
+
+  // Optional: if deviceId changes while running, auto-restart with the new device
+  useEffect(() => {
+    if (!running) return
+    let cancelled = false
+    ;(async () => {
+      stop()
+      if (!cancelled) await start()
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId]) // we intentionally depend only on deviceId for this auto-restart
 
   return {
     start,
@@ -87,5 +102,5 @@ export function useAudioGraph() {
     audioCtx: ctxRef.current,
     source: srcRef.current,
     analyser: analyserRef.current,
-  };
+  }
 }
