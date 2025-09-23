@@ -1,5 +1,25 @@
-// src/pages/TunerPage.tsx
+import { useEffect, useState } from "react";
+import { useAudioGraph } from "../audio/useAudioGraph";
+
 export default function TunerPage() {
+  const { start, stop, running, ready, analyser } = useAudioGraph();
+  const [rms, setRms] = useState(0);
+
+  useEffect(() => {
+    if (!ready || !analyser) return;
+    const buf = new Float32Array(analyser.fftSize);
+    let raf = 0;
+    const tick = () => {
+      analyser.getFloatTimeDomainData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      setRms(Math.sqrt(sum / buf.length));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [ready, analyser]);
+
   return (
     <section
       aria-labelledby="tuner-heading"
@@ -8,10 +28,41 @@ export default function TunerPage() {
       <h2 id="tuner-heading" className="text-lg font-medium text-cyan-200">
         Tuner
       </h2>
-      <p className="mt-2 text-cyan-300/90">
-        Live pitch detection UI will appear here (needle, note, frequency,
-        meters).
-      </p>
+
+      <div className="mt-4 flex gap-3">
+        {!running ? (
+          <button
+            onClick={start}
+            className="px-4 py-2 rounded bg-cyan-500/20 ring-1 ring-cyan-400 hover:bg-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+          >
+            Start mic
+          </button>
+        ) : (
+          <button
+            onClick={stop}
+            className="px-4 py-2 rounded bg-rose-500/20 ring-1 ring-rose-400 hover:bg-rose-500/30 focus:outline-none focus:ring-2 focus:ring-rose-300"
+          >
+            Stop mic
+          </button>
+        )}
+      </div>
+
+      <div className="mt-6" aria-label="Input level">
+        <div className="text-sm text-cyan-300/90 mb-2">Input level (RMS)</div>
+        <div
+          className="h-3 bg-neutral-800 rounded"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={1}
+          aria-valuenow={rms}
+          aria-label="Input level meter"
+        >
+          <div
+            className="h-3 rounded bg-cyan-400 transition-[width]"
+            style={{ width: `${Math.min(100, rms * 400)}%` }}
+          />
+        </div>
+      </div>
     </section>
   );
 }
