@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { useAppStore } from "../state/useAppstore";
+import { useAppStore } from "../state/useAppStore";
 
 export default function A4Control() {
   const sliderId = useId();

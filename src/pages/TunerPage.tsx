@@ -1,28 +1,17 @@
 import { useEffect, useState } from "react";
 import { useAudioGraph } from "../audio/useAudioGraph";
 import { usePitch } from "../audio/usePitch";
+import A4Control from "../components/A4Control";
+import { useAppStore } from "../state/useAppStore";
 
 export default function TunerPage() {
   const { start, stop, running, ready, analyser, audioCtx, source } =
     useAudioGraph();
+  const a4 = useAppStore((s) => s.a4);
   const [rms, setRms] = useState(0);
-  const pitch = usePitch(audioCtx, source); // default A4 = 440
+  const pitch = usePitch(audioCtx, source, a4); // <-- pass A4
 
-  // Poll analyser for a simple RMS sanity check
-  useEffect(() => {
-    if (!ready || !analyser) return;
-    const buf = new Float32Array(analyser.fftSize);
-    let raf = 0;
-    const tick = () => {
-      analyser.getFloatTimeDomainData(buf);
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-      setRms(Math.sqrt(sum / buf.length));
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [ready, analyser]);
+  // ... (keep your existing RMS effect)
 
   const cents = pitch.cents ?? 0;
   const centsPct = Math.max(0, Math.min(100, ((cents + 50) / 100) * 100));
@@ -76,7 +65,9 @@ export default function TunerPage() {
 
         {/* Pitch panel */}
         <div className="rounded-xl p-4 bg-neutral-900 ring-1 ring-neutral-800">
-          <div className="text-sm text-cyan-300/90 mb-2">Pitch</div>
+          <div className="text-sm text-cyan-300/90 mb-2">
+            Pitch (A4 = {a4} Hz)
+          </div>
 
           <div className="flex items-end gap-4">
             <div className="text-6xl md:text-7xl font-bold tracking-widest text-cyan-400 tabular-nums min-w-[6ch]">
@@ -110,6 +101,11 @@ export default function TunerPage() {
             Confidence: {(pitch.confidence * 100).toFixed(0)}%
           </p>
         </div>
+      </div>
+
+      {/* A4 control */}
+      <div className="mt-6">
+        <A4Control />
       </div>
     </section>
   );
