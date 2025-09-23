@@ -1,7 +1,8 @@
 // src/App.tsx
-import { Link, Route, Routes } from "react-router";
-import TunerPage from "./pages/TunerPage";
-import PeaksPage from "./pages/PeaksPage";
+import { Link, Route, Routes } from 'react-router'
+import TunerPage from './pages/TunerPage'
+import PeaksPage from './pages/PeaksPage'
+import ToastContainer from './components/ToastContainer'
 
 export default function App() {
   return (
@@ -11,18 +12,12 @@ export default function App() {
         <nav aria-label="Main">
           <ul className="flex gap-4">
             <li>
-              <Link
-                className="hover:underline focus:outline-none focus:ring"
-                to="/"
-              >
+              <Link className="hover:underline focus:outline-none focus:ring" to="/">
                 Tuner
               </Link>
             </li>
             <li>
-              <Link
-                className="hover:underline focus:outline-none focus:ring"
-                to="/peaks"
-              >
+              <Link className="hover:underline focus:outline-none focus:ring" to="/peaks">
                 Waveforms
               </Link>
             </li>
@@ -36,6 +31,8 @@ export default function App() {
           <Route path="/peaks" element={<PeaksPage />} />
         </Routes>
       </section>
+      {/* Toasts */}
+      <ToastContainer />
     </main>
-  );
+  )
 }

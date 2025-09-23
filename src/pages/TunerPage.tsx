@@ -4,6 +4,7 @@ import { usePitch } from '../audio/usePitch'
 import A4Control from '../components/A4Control'
 import DeviceSelect from '../components/DeviceSelect'
 import { useAppStore } from '../state/useAppStore'
+import { useToastStore } from '../state/useToastStore'
 
 export default function TunerPage() {
   const a4 = useAppStore((s) => s.a4)
@@ -120,7 +121,7 @@ export default function TunerPage() {
         <A4Control />
         <DeviceSelect
           onAfterPermission={() => {
-            /* optional hook */
+            useToastStore.getState().push('Device labels updated')
           }}
         />
       </div>
