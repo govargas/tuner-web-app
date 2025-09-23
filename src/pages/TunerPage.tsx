@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react'
 import { useAudioGraph } from '../audio/useAudioGraph'
 import { usePitch } from '../audio/usePitch'
 import A4Control from '../components/A4Control'
+import DeviceSelect from '../components/DeviceSelect'
 import { useAppStore } from '../state/useAppStore'
 
 export default function TunerPage() {
-  const { start, stop, running, ready, analyser, audioCtx, source } = useAudioGraph()
   const a4 = useAppStore((s) => s.a4)
+  const deviceId = useAppStore((s) => s.deviceId)
+  const { start, stop, running, ready, analyser, audioCtx, source } = useAudioGraph(deviceId)
   const [rms, setRms] = useState(0)
   const pitch = usePitch(audioCtx, source, a4)
 
-  // Poll analyser for RMS input level (sanity check)
   useEffect(() => {
     if (!ready || !analyser) return
     const buf = new Float32Array(analyser.fftSize)
@@ -114,9 +115,14 @@ export default function TunerPage() {
         </div>
       </div>
 
-      {/* A4 control */}
-      <div className="mt-6">
+      {/* Controls */}
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
         <A4Control />
+        <DeviceSelect
+          onAfterPermission={() => {
+            /* optional hook */
+          }}
+        />
       </div>
     </section>
   )
