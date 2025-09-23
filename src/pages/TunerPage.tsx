@@ -5,6 +5,7 @@ export default function TunerPage() {
   const { start, stop, running, ready, analyser } = useAudioGraph();
   const [rms, setRms] = useState(0);
 
+  // Poll analyser for a simple RMS sanity check
   useEffect(() => {
     if (!ready || !analyser) return;
     const buf = new Float32Array(analyser.fftSize);
@@ -62,6 +63,7 @@ export default function TunerPage() {
             style={{ width: `${Math.min(100, rms * 400)}%` }}
           />
         </div>
+        <p className="mt-2 text-xs text-cyan-300/70">RMS: {rms.toFixed(3)}</p>
       </div>
     </section>
   );
