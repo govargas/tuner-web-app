@@ -1,11 +1,11 @@
-import { useId } from "react";
-import { useAppStore } from "../state/useAppStore";
+import { useId } from 'react'
+import { useAppStore } from '../state/useAppStore'
 
 export default function A4Control() {
-  const sliderId = useId();
-  const inputId = useId();
-  const a4 = useAppStore((s) => s.a4);
-  const setA4 = useAppStore((s) => s.setA4);
+  const sliderId = useId()
+  const inputId = useId()
+  const a4 = useAppStore((s) => s.a4)
+  const setA4 = useAppStore((s) => s.setA4)
 
   return (
     <fieldset className="rounded-xl p-4 bg-neutral-900 ring-1 ring-neutral-800">
@@ -47,5 +47,5 @@ export default function A4Control() {
         Sets the tuning standard for note calculations (range 432–446 Hz).
       </p>
     </fieldset>
-  );
+  )
 }

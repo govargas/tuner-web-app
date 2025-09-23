@@ -1,20 +1,19 @@
-import { useEffect, useState } from "react";
-import { useAudioGraph } from "../audio/useAudioGraph";
-import { usePitch } from "../audio/usePitch";
-import A4Control from "../components/A4Control";
-import { useAppStore } from "../state/useAppStore";
+import { useEffect, useState } from 'react'
+import { useAudioGraph } from '../audio/useAudioGraph'
+import { usePitch } from '../audio/usePitch'
+import A4Control from '../components/A4Control'
+import { useAppStore } from '../state/useAppStore'
 
 export default function TunerPage() {
-  const { start, stop, running, ready, analyser, audioCtx, source } =
-    useAudioGraph();
-  const a4 = useAppStore((s) => s.a4);
-  const [rms, setRms] = useState(0);
-  const pitch = usePitch(audioCtx, source, a4); // <-- pass A4
+  const { start, stop, running, ready, analyser, audioCtx, source } = useAudioGraph()
+  const a4 = useAppStore((s) => s.a4)
+  const [rms, setRms] = useState(0)
+  const pitch = usePitch(audioCtx, source, a4) // <-- pass A4
 
-  // ... (keep your existing RMS effect)
+  // ... (keep the existing RMS effect)
 
-  const cents = pitch.cents ?? 0;
-  const centsPct = Math.max(0, Math.min(100, ((cents + 50) / 100) * 100));
+  const cents = pitch.cents ?? 0
+  const centsPct = Math.max(0, Math.min(100, ((cents + 50) / 100) * 100))
 
   return (
     <section
@@ -65,16 +64,14 @@ export default function TunerPage() {
 
         {/* Pitch panel */}
         <div className="rounded-xl p-4 bg-neutral-900 ring-1 ring-neutral-800">
-          <div className="text-sm text-cyan-300/90 mb-2">
-            Pitch (A4 = {a4} Hz)
-          </div>
+          <div className="text-sm text-cyan-300/90 mb-2">Pitch (A4 = {a4} Hz)</div>
 
           <div className="flex items-end gap-4">
             <div className="text-6xl md:text-7xl font-bold tracking-widest text-cyan-400 tabular-nums min-w-[6ch]">
-              {pitch.note ?? "—"}
+              {pitch.note ?? '—'}
             </div>
             <div className="text-xl text-cyan-300/90 tabular-nums">
-              {pitch.hz ? `${pitch.hz.toFixed(1)} Hz` : "000.0 Hz"}
+              {pitch.hz ? `${pitch.hz.toFixed(1)} Hz` : '000.0 Hz'}
             </div>
           </div>
 
@@ -108,5 +105,5 @@ export default function TunerPage() {
         <A4Control />
       </div>
     </section>
-  );
+  )
 }
