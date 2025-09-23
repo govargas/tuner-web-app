@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware'
 type AppState = {
   a4: number
   setA4: (v: number) => void
+  deviceId?: string
+  setDeviceId: (id?: string) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -11,7 +13,9 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       a4: 440,
       setA4: (v) => set({ a4: Math.min(446, Math.max(432, Math.round(v))) }),
+      deviceId: undefined,
+      setDeviceId: (id) => set({ deviceId: id }),
     }),
-    { name: 'tuner-app-settings' }, // localStorage key
+    { name: 'tuner-app-settings' },
   ),
 )
