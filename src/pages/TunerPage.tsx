@@ -8,9 +8,23 @@ export default function TunerPage() {
   const { start, stop, running, ready, analyser, audioCtx, source } = useAudioGraph()
   const a4 = useAppStore((s) => s.a4)
   const [rms, setRms] = useState(0)
-  const pitch = usePitch(audioCtx, source, a4) // <-- pass A4
+  const pitch = usePitch(audioCtx, source, a4)
 
-  // ... (keep the existing RMS effect)
+  // Poll analyser for RMS input level (sanity check)
+  useEffect(() => {
+    if (!ready || !analyser) return
+    const buf = new Float32Array(analyser.fftSize)
+    let raf = 0
+    const tick = () => {
+      analyser.getFloatTimeDomainData(buf)
+      let sum = 0
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i]
+      setRms(Math.sqrt(sum / buf.length))
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [ready, analyser])
 
   const cents = pitch.cents ?? 0
   const centsPct = Math.max(0, Math.min(100, ((cents + 50) / 100) * 100))
