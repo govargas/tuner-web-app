@@ -28,8 +28,8 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
 
   if (!supported) {
     return (
-      <div className="rounded-xl p-4 bg-neutral-900 ring-1 ring-neutral-800">
-        <p className="text-sm text-cyan-300/90">Device selection not supported in this browser.</p>
+      <div className="panel">
+        <p className="caption">Device selection not supported in this browser.</p>
       </div>
     )
   }
@@ -39,8 +39,8 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
   )
 
   return (
-    <fieldset className="rounded-xl p-4 bg-neutral-900 ring-1 ring-neutral-800">
-      <legend className="text-sm text-cyan-200">Input device</legend>
+    <fieldset className="panel">
+      <legend className="panel-title">Input device</legend>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex-1">
@@ -49,7 +49,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
           </label>
           <select
             id={selectId}
-            className="w-full rounded bg-neutral-950/60 ring-1 ring-neutral-700 px-2 py-2 text-cyan-200"
+            className="input-control"
             value={deviceId ?? ''}
             onChange={(e) => setDeviceId(e.currentTarget.value || undefined)}
             aria-label="Microphone input device"
@@ -67,7 +67,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
           <button
             type="button"
             onClick={() => refresh()}
-            className="px-3 py-2 rounded bg-cyan-500/20 ring-1 ring-cyan-400 hover:bg-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+            className="btn-ghost"
           >
             Refresh
           </button>
@@ -76,7 +76,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
             <button
               type="button"
               onClick={promptPermission}
-              className="px-3 py-2 rounded bg-amber-500/20 ring-1 ring-amber-400 hover:bg-amber-500/30 focus:outline-none focus:ring-2 focus:ring-amber-300"
+              className="btn-primary btn-danger"
               aria-describedby="device-help"
             >
               Reveal labels
@@ -85,7 +85,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
         </div>
       </div>
 
-      <p id="device-help" className="mt-2 text-xs text-cyan-300/70">
+      <p id="device-help" className="caption mt-2">
         If device labels look generic, click “Reveal labels” to grant mic permission so the browser
         can show exact names.
       </p>

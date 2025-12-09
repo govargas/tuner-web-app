@@ -8,9 +8,9 @@ export default function A4Control() {
   const setA4 = useAppStore((s) => s.setA4)
 
   return (
-    <fieldset className="rounded-xl p-4 bg-neutral-900 ring-1 ring-neutral-800">
-      <legend className="text-sm text-cyan-200">Reference pitch</legend>
-      <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+    <fieldset className="panel">
+      <legend className="panel-title">Reference pitch</legend>
+      <div className="form-shell sm:grid-cols-[1fr_auto] sm:items-center">
         <label htmlFor={sliderId} className="sr-only">
           A4 reference (Hz)
         </label>
@@ -25,10 +25,10 @@ export default function A4Control() {
           aria-valuemax={446}
           aria-valuenow={a4}
           aria-label="A4 reference, Hertz"
-          className="w-full"
+          className="input-control"
         />
-        <div className="flex items-center gap-2">
-          <label htmlFor={inputId} className="text-cyan-300/90 text-sm">
+        <div className="input-shell">
+          <label htmlFor={inputId} className="input-label">
             A4 (Hz)
           </label>
           <input
@@ -39,11 +39,12 @@ export default function A4Control() {
             max={446}
             value={a4}
             onChange={(e) => setA4(Number(e.currentTarget.value))}
-            className="w-20 rounded bg-neutral-950/60 ring-1 ring-neutral-700 px-2 py-1 text-cyan-200"
+            className="input-control"
+            style={{ maxWidth: '96px' }}
           />
         </div>
       </div>
-      <p className="mt-2 text-xs text-cyan-300/70">
+      <p className="caption mt-2">
         Sets the tuning standard for note calculations (range 432–446 Hz).
       </p>
     </fieldset>
