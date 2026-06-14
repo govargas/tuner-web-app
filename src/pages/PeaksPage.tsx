@@ -8,14 +8,16 @@ const IDLE_WAVE =
 
 export default function PeaksPage() {
   return (
-    <section aria-labelledby="peaks-heading" className="instrument" style={{ marginTop: '14px' }}>
-      <div className="instrument-head">
-        <div className="flex items-baseline gap-3">
-          <h2 id="peaks-heading" className="instrument-label">
-            Waveforms
-          </h2>
-          <span className="caption">Upload and inspect peak data</span>
-        </div>
+    <section
+      aria-labelledby="peaks-heading"
+      className="panel metal"
+      style={{ marginTop: '14px' }}
+    >
+      <div className="mb-4 flex items-baseline gap-3">
+        <h2 id="peaks-heading" className="panel-title" style={{ margin: 0 }}>
+          Waveforms
+        </h2>
+        <span className="caption">Upload and inspect peak data</span>
       </div>
 
       <div className="waveform-stage">
@@ -35,8 +37,8 @@ export default function PeaksPage() {
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="caption" style={{ maxWidth: '52ch' }}>
-          No waveform loaded. Drop an audio file here to render its peaks against the same phosphor
-          display the tuner uses.
+          No waveform loaded. Drop an audio file here to render its peaks on the same neon display
+          the tuner uses.
         </p>
         <button type="button" className="btn-primary" disabled aria-disabled="true">
           Upload audio
