@@ -10,8 +10,10 @@ import { useToastStore } from '../state/useToastStore'
 const STROBE_SEGMENTS = 41
 const STROBE_CENTER = (STROBE_SEGMENTS - 1) / 2
 
-// The only WebGL on the page: a real reflective metal knob, code-split.
+// WebGL is code-split: a static brushed-silver chassis plate + a reflective
+// metal knob. Both fall back to CSS silver if the chunk/WebGL is unavailable.
 const MetalKnob = lazy(() => import('../three/MetalKnob'))
+const MetalPlate = lazy(() => import('../three/MetalPlate'))
 
 export default function TunerPage() {
   const a4 = useAppStore((s) => s.a4)
@@ -67,6 +69,10 @@ export default function TunerPage() {
         aria-labelledby="tuner-heading"
         className={`instrument ${powerOn ? 'vfd-power' : ''}`}
       >
+        <Suspense fallback={null}>
+          <MetalPlate />
+        </Suspense>
+        <div className="instrument-content">
         <div className="instrument-head">
           <div className="flex items-baseline gap-3">
             <h2 id="tuner-heading" className="instrument-label">
@@ -171,6 +177,7 @@ export default function TunerPage() {
             </Suspense>
             <span className="knob-label">A4 {a4} Hz</span>
           </div>
+        </div>
         </div>
       </section>
 

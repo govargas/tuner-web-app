@@ -36,8 +36,12 @@
   --silver-3: #a4a8aa;
   --silver-edge: #8c9092;
 
-  --ink: #1d2123;
-  --ink-2: #4a4f52;
+  /* engraved ink on silver - cyan-tinted, dark enough for AA contrast on metal */
+  --ink: #0f3640;
+  --ink-2: #1f4d58;
+
+  /* secondary labels inside the dark glass display - bright neon cyan */
+  --display-label: #74cdf2;
 
   --glass: #061018;
   --glass-edge: #08151f;
@@ -167,7 +171,7 @@ body {
 .nav-link {
   padding: 8px 14px;
   border-radius: var(--r-control);
-  color: #9aa0a4;
+  color: #9fc3d4;
   font-size: 0.74rem;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -205,6 +209,12 @@ body {
   margin-top: 14px;
   border-radius: var(--r-plate);
   padding: 16px;
+}
+
+/* DOM content sits above the WebGL chassis plate (MetalPlate, z-index 0) */
+.instrument-content {
+  position: relative;
+  z-index: 1;
 }
 
 .instrument-head {
@@ -309,7 +319,7 @@ body {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #5f7c8c;
+  color: var(--display-label);
 }
 
 .display-status .live {
@@ -357,7 +367,7 @@ body {
   font-family: var(--font-ui);
   font-size: 0.42em;
   letter-spacing: 0.18em;
-  color: #5f7c8c;
+  color: var(--display-label);
   margin-left: 0.5em;
   vertical-align: 0.4em;
 }
@@ -396,7 +406,7 @@ body {
   justify-content: space-between;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
-  color: #5f7c8c;
+  color: var(--display-label);
   margin-bottom: 8px;
 }
 
@@ -685,7 +695,7 @@ input[type='range']::-moz-range-thumb {
 .small-label {
   display: flex;
   justify-content: space-between;
-  color: #5f7c8c;
+  color: var(--display-label);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;

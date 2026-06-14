@@ -26,7 +26,6 @@ export default function MetalKnob({ value, min, max, onChange }: MetalKnobProps)
   useEffect(() => {
     const mount = mountRef.current
     if (!mount) return
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -101,12 +100,14 @@ export default function MetalKnob({ value, min, max, onChange }: MetalKnobProps)
     knob.add(dot)
     scene.add(knob)
 
+    let needsRender = true
     function resize() {
       const w = mount!.clientWidth
       const h = mount!.clientHeight || w
       renderer.setSize(w, h, false)
       camera.aspect = w / h
       camera.updateProjectionMatrix()
+      needsRender = true // re-render once the real size is known
     }
     resize()
     const ro = new ResizeObserver(resize)
@@ -137,17 +138,21 @@ export default function MetalKnob({ value, min, max, onChange }: MetalKnobProps)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
 
+    // Render only when the knob actually turns: rotating the radial-brushed
+    // body shifts its specular highlights, so the metallic reflection moves
+    // while you turn it and sits still (but still shiny) at rest. No idle loop.
     let raf = 0
-    const clock = new THREE.Clock()
     function frame() {
       const { value: v, min: mn, max: mx } = valueRef.current
-      const t = (v - mn) / (mx - mn)
-      knob.rotation.z = (0.5 - t) * (Math.PI * 1.5)
-      if (!reduceMotion) {
-        const e = clock.getElapsedTime()
-        key.position.x = Math.sin(e * 0.4) * 5
+      const target = (0.5 - (v - mn) / (mx - mn)) * (Math.PI * 1.5)
+      if (Math.abs(knob.rotation.z - target) > 1e-4) {
+        knob.rotation.z = target
+        needsRender = true
       }
-      renderer.render(scene, camera)
+      if (needsRender) {
+        renderer.render(scene, camera)
+        needsRender = false
+      }
       raf = requestAnimationFrame(frame)
     }
     frame()
