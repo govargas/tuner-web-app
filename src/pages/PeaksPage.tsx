@@ -35,8 +35,8 @@ export default function PeaksPage() {
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="caption" style={{ maxWidth: '52ch' }}>
-          No waveform loaded. Drop an audio file here to render its peaks against the same phosphor
-          display the tuner uses.
+          No waveform loaded. Drop an audio file here to render its peaks on the same neon display
+          the tuner uses.
         </p>
         <button type="button" className="btn-primary" disabled aria-disabled="true">
           Upload audio

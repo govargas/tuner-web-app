@@ -1,14 +1,13 @@
 @import 'tailwindcss';
 
 /* ===========================================================================
-   TUNER - 80s VFD instrument language
-   Mode: redesign / overhaul. Theme LOCKED to dark (Section 4.11).
-   Accent: one phosphor - classic teal-green (Color Consistency Lock, 4.2).
-   Self-hosted display faces (no Google Fonts <link>, Section 3.A):
-     DSEG14 (14-segment, alphanumeric) → note readout
-     DSEG7  (7-segment, numeric)       → frequency readout
-   Shape scale (Shape Consistency Lock, 4.4):
-     display/panels 8px · controls 6px · segments 1px · pills/thumb full
+   TUNER - brushed-silver rack instrument (hybrid build)
+   Chassis + neon-blue display are pure CSS (accessible, fast). three.js is
+   used only where it genuinely wins: one real environment-reflective metal
+   knob (see MetalKnob.tsx), lazy-loaded as an isolated canvas.
+   Material language: brushed-silver plates on a dark studio backdrop, single
+   neon light-blue accent. Self-hosted DSEG14 / DSEG7 drive the readout.
+   Shape scale: plates 12px - controls 8px - segments 1px - pills/thumb full.
    =========================================================================== */
 
 @font-face {
@@ -28,38 +27,33 @@
 :root {
   color-scheme: dark;
 
-  /* surfaces (off-black, faint green cast - a tube behind smoked glass) */
-  --bg-900: #03060a;
-  --bg-800: #05090d;
-  --panel: #080f12;
-  --glass: #04100c;
-  --glass-edge: #0a1c18;
-  --border: #14211f;
-  --hairline: rgba(61, 240, 196, 0.14);
+  --bg-900: #121418;
+  --bg-800: #0c0d10;
 
-  /* phosphor - the single accent, classic teal-green VFD */
-  --vfd: #3df0c4;
-  --vfd-core: #d7fff1; /* hot center of a lit segment */
-  --vfd-dim: rgba(61, 240, 196, 0.1); /* unlit "ghost" segments */
-  --glow: rgba(61, 240, 196, 0.55);
-  --glow-soft: rgba(61, 240, 196, 0.28);
+  --silver-hi: #e6e8ea;
+  --silver-1: #d2d5d7;
+  --silver-2: #bbbfc1;
+  --silver-3: #a4a8aa;
+  --silver-edge: #8c9092;
 
-  /* text */
-  --text-primary: #c8f7e9;
-  --text-secondary: #6fb8a6;
+  --ink: #1d2123;
+  --ink-2: #4a4f52;
 
-  /* meter states (warm, reads against teal phosphor) */
-  --warning: #ffb000;
-  --danger: #ff5a52;
+  --glass: #061018;
+  --glass-edge: #08151f;
+  --neon: #46c2ff;
+  --neon-hot: #dcf2ff;
+  --neon-soft: rgba(70, 194, 255, 0.4);
+  --neon-dim: rgba(70, 194, 255, 0.14);
 
-  /* shape scale */
-  --r-panel: 8px;
-  --r-control: 6px;
+  --warning: #ffd166;
+  --danger: #ff6a5e;
+
+  --r-plate: 12px;
+  --r-control: 8px;
   --r-seg: 1px;
 
-  /* type */
-  --font-ui: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas,
-    monospace;
+  --font-ui: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
 }
 
 *,
@@ -72,9 +66,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 50% -10%, rgba(61, 240, 196, 0.06), transparent 40%),
-    linear-gradient(180deg, var(--bg-900) 0%, #02050a 100%);
-  color: var(--text-primary);
+    radial-gradient(120% 80% at 50% -10%, #1c1f24, transparent 55%),
+    linear-gradient(180deg, var(--bg-900) 0%, var(--bg-800) 100%);
+  color: #cfd3d6;
   font-family: var(--font-ui);
   font-feature-settings: 'tnum' 1;
   -webkit-font-smoothing: antialiased;
@@ -88,11 +82,52 @@ body {
   min-height: 100dvh;
 }
 
-/* ---- header / brand ----------------------------------------------------- */
+/* brushed-silver plate (shared) */
+.metal,
+.instrument {
+  position: relative;
+  background:
+    linear-gradient(
+      180deg,
+      var(--silver-hi) 0%,
+      var(--silver-1) 8%,
+      var(--silver-2) 50%,
+      var(--silver-1) 90%,
+      var(--silver-3) 100%
+    );
+  border: 1px solid var(--silver-edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+.metal::before,
+.instrument::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.12) 0 1px,
+    rgba(0, 0, 0, 0.05) 1px 3px
+  );
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+.metal > *,
+.instrument > * {
+  position: relative;
+}
+
+/* ---- header ------------------------------------------------------------- */
 .app-header {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 22px 20px 10px;
+  padding: 24px 20px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -105,13 +140,12 @@ body {
   gap: 12px;
 }
 
-/* power LED - real semantic state would drive this; here it is the brand mark */
 .brand-led {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: var(--vfd);
-  box-shadow: 0 0 10px var(--glow), 0 0 18px var(--glow-soft);
+  background: var(--neon);
+  box-shadow: 0 0 10px var(--neon-soft), 0 0 20px var(--neon-dim);
 }
 
 .brand-title {
@@ -121,8 +155,8 @@ body {
   letter-spacing: 0.42em;
   font-weight: 700;
   text-indent: 0.42em;
-  color: var(--vfd);
-  text-shadow: 0 0 14px var(--glow), 0 0 32px var(--glow-soft);
+  color: #eef1f3;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
 }
 
 .nav {
@@ -133,7 +167,7 @@ body {
 .nav-link {
   padding: 8px 14px;
   border-radius: var(--r-control);
-  color: var(--text-secondary);
+  color: #9aa0a4;
   font-size: 0.74rem;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -144,20 +178,20 @@ body {
 }
 
 .nav-link:hover {
-  color: var(--text-primary);
-  background: rgba(61, 240, 196, 0.06);
+  color: #e6e9eb;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .nav-link:focus-visible {
-  outline: 2px solid var(--vfd);
+  outline: 2px solid var(--neon);
   outline-offset: 3px;
 }
 
 .nav-link-active {
-  color: var(--vfd);
-  border-color: var(--hairline);
-  background: rgba(61, 240, 196, 0.1);
-  text-shadow: 0 0 12px var(--glow-soft);
+  color: var(--neon);
+  border-color: var(--neon-soft);
+  background: rgba(70, 194, 255, 0.1);
+  text-shadow: 0 0 12px var(--neon-dim);
 }
 
 .app-main {
@@ -169,15 +203,8 @@ body {
 /* ---- instrument housing ------------------------------------------------- */
 .instrument {
   margin-top: 14px;
-  border-radius: calc(var(--r-panel) + 6px);
-  padding: 14px;
-  /* brushed-metal housing */
-  background:
-    linear-gradient(180deg, #11181a 0%, #0a1012 40%, #070c0e 100%);
-  border: 1px solid #1b2826;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 30px 70px rgba(0, 0, 0, 0.6);
+  border-radius: var(--r-plate);
+  padding: 16px;
 }
 
 .instrument-head {
@@ -185,7 +212,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 2px 6px 14px;
+  padding: 2px 4px 14px;
 }
 
 .instrument-label {
@@ -193,27 +220,65 @@ body {
   font-size: 0.74rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--ink-2);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-/* the glass display itself */
+.instrument-body {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.instrument-body .vfd-glass {
+  flex: 1;
+}
+
+.knob-bay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 168px;
+  flex-shrink: 0;
+}
+
+.knob-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 640px) {
+  .instrument-body {
+    flex-direction: column-reverse;
+  }
+  .knob-bay {
+    width: 100%;
+    height: 150px;
+  }
+}
+
+/* ---- the glass display (dark, neon-blue) -------------------------------- */
 .vfd-glass {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border-radius: var(--r-panel);
-  padding: 26px 22px 24px;
+  border-radius: var(--r-control);
+  padding: 24px 22px 22px;
   background:
-    radial-gradient(120% 80% at 50% 0%, rgba(61, 240, 196, 0.07), transparent 55%),
-    linear-gradient(180deg, var(--glass-edge), var(--glass) 30%);
-  border: 1px solid #0e2420;
+    radial-gradient(120% 80% at 50% 0%, rgba(70, 194, 255, 0.08), transparent 55%),
+    linear-gradient(180deg, var(--glass-edge), var(--glass) 32%);
+  border: 1px solid #04222e;
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.6),
-    inset 0 2px 22px rgba(0, 0, 0, 0.85),
-    inset 0 0 60px rgba(61, 240, 196, 0.05);
+    inset 0 2px 22px rgba(0, 0, 0, 0.9),
+    inset 0 0 60px rgba(70, 194, 255, 0.05);
 }
 
-/* scanline + vignette overlay - static, contained, pointer-events:none (6.E) */
 .vfd-glass::after {
   content: '';
   position: absolute;
@@ -226,9 +291,9 @@ body {
       0deg,
       rgba(0, 0, 0, 0) 0px,
       rgba(0, 0, 0, 0) 2px,
-      rgba(0, 0, 0, 0.16) 3px
+      rgba(0, 0, 0, 0.18) 3px
     ),
-    radial-gradient(130% 110% at 50% 40%, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
+    radial-gradient(130% 110% at 50% 40%, transparent 60%, rgba(0, 0, 0, 0.55) 100%);
 }
 
 .vfd-glass > * {
@@ -236,7 +301,6 @@ body {
   z-index: 1;
 }
 
-/* the strip of small status labels across the top of the glass */
 .display-status {
   display: flex;
   align-items: center;
@@ -245,15 +309,15 @@ body {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: #5f7c8c;
 }
 
 .display-status .live {
-  color: var(--vfd);
-  text-shadow: 0 0 10px var(--glow-soft);
+  color: var(--neon);
+  text-shadow: 0 0 10px var(--neon-soft);
 }
 
-/* ---- segmented readouts (phosphor + ghost) ------------------------------ */
+/* ---- segmented readouts (neon + ghost) ---------------------------------- */
 .readout {
   position: relative;
   display: inline-block;
@@ -262,50 +326,47 @@ body {
 }
 
 .readout .ghost {
-  color: var(--vfd-dim);
+  color: var(--neon-dim);
 }
 
 .readout .live {
   position: absolute;
   inset: 0;
-  color: var(--vfd-core);
+  color: var(--neon-hot);
   text-shadow:
     0 0 6px #fff,
-    0 0 14px var(--vfd),
-    0 0 30px var(--glow),
-    0 0 60px var(--glow-soft);
+    0 0 14px var(--neon),
+    0 0 30px var(--neon-soft),
+    0 0 60px var(--neon-dim);
   transition: opacity 0.18s ease, text-shadow 0.18s ease;
 }
 
 .vfd-note {
   font-family: 'VFD14', var(--font-ui);
-  font-size: clamp(58px, 13vw, 116px);
+  font-size: clamp(52px, 11vw, 104px);
   letter-spacing: 0.06em;
 }
 
 .vfd-freq {
   font-family: 'VFD7', var(--font-ui);
-  font-size: clamp(26px, 5.5vw, 50px);
+  font-size: clamp(24px, 5vw, 46px);
   letter-spacing: 0.05em;
 }
 
-/* unit suffix sits in UI mono, not segmented */
 .freq-unit {
   font-family: var(--font-ui);
   font-size: 0.42em;
   letter-spacing: 0.18em;
-  color: var(--text-secondary);
+  color: #5f7c8c;
   margin-left: 0.5em;
   vertical-align: 0.4em;
 }
 
-/* dim the whole display when there is no signal */
 .vfd-idle .readout .live {
-  opacity: 0.18;
+  opacity: 0.16;
   text-shadow: none;
 }
 
-/* power-on sweep when the mic starts (MOTION 4, gated below) */
 .vfd-power .vfd-glass {
   animation: vfd-power-on 0.7s ease-out;
 }
@@ -328,19 +389,19 @@ body {
   }
 }
 
-/* ---- cents strobe (replaces the old slider thumb) ----------------------- */
+/* ---- cents strobe ------------------------------------------------------- */
 .strobe-scale {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
-  color: var(--text-secondary);
+  color: #5f7c8c;
   margin-bottom: 8px;
 }
 
 .strobe-scale .center {
-  color: var(--vfd);
+  color: var(--neon);
 }
 
 .strobe {
@@ -350,39 +411,39 @@ body {
   height: 30px;
   padding: 5px;
   border-radius: var(--r-control);
-  background: #030a08;
-  border: 1px solid #0e2420;
-  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.8);
+  background: #020a10;
+  border: 1px solid #04222e;
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.85);
 }
 
 .strobe-seg {
   flex: 1;
   border-radius: var(--r-seg);
-  background: var(--vfd-dim);
+  background: var(--neon-dim);
   transition: background 0.12s ease, box-shadow 0.12s ease;
 }
 
 .strobe-seg.center {
   flex: 0 0 2px;
-  background: rgba(61, 240, 196, 0.35);
+  background: rgba(70, 194, 255, 0.4);
 }
 
 .strobe-seg.on {
-  background: var(--vfd);
-  box-shadow: 0 0 10px var(--glow), 0 0 20px var(--glow-soft);
+  background: var(--neon);
+  box-shadow: 0 0 10px var(--neon-soft), 0 0 20px var(--neon-dim);
 }
 
 .strobe-seg.on.near {
-  background: var(--vfd-core);
-  box-shadow: 0 0 12px #fff, 0 0 22px var(--glow);
+  background: var(--neon-hot);
+  box-shadow: 0 0 12px #fff, 0 0 22px var(--neon);
 }
 
 .strobe-seg.on.warn {
   background: var(--warning);
-  box-shadow: 0 0 10px rgba(255, 176, 0, 0.6);
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.6);
 }
 
-/* ---- secondary control panels ------------------------------------------- */
+/* ---- control plates ----------------------------------------------------- */
 .panel-grid {
   display: grid;
   gap: 14px;
@@ -391,12 +452,8 @@ body {
 }
 
 .panel {
-  position: relative;
-  border-radius: var(--r-panel);
-  border: 1px solid var(--border);
-  background: var(--panel);
+  border-radius: var(--r-plate);
   padding: 16px 16px 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .panel-title {
@@ -404,91 +461,82 @@ body {
   font-size: 0.74rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--ink-2);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-/* ---- buttons ------------------------------------------------------------ */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 11px 20px;
-  border-radius: var(--r-control);
-  border: 1px solid var(--vfd);
-  background: rgba(61, 240, 196, 0.12);
-  color: var(--vfd);
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-shadow: 0 0 10px var(--glow-soft);
-  box-shadow: inset 0 0 12px rgba(61, 240, 196, 0.1);
-  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+legend.panel-title {
+  float: left;
+  width: 100%;
+  padding: 0;
+}
+legend.panel-title + * {
+  clear: both;
 }
 
-.btn-primary:hover {
-  background: rgba(61, 240, 196, 0.2);
-  box-shadow: inset 0 0 12px rgba(61, 240, 196, 0.18), 0 0 18px var(--glow-soft);
-}
-
-.btn-primary:active {
-  transform: translateY(1px) scale(0.99);
-}
-
-.btn-primary:focus-visible {
-  outline: 2px solid var(--vfd);
-  outline-offset: 3px;
-}
-
-.btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-danger {
-  border-color: var(--danger);
-  color: var(--danger);
-  background: rgba(255, 90, 82, 0.12);
-  text-shadow: 0 0 10px rgba(255, 90, 82, 0.4);
-  box-shadow: inset 0 0 12px rgba(255, 90, 82, 0.1);
-}
-
-.btn-danger:hover {
-  background: rgba(255, 90, 82, 0.2);
-  box-shadow: inset 0 0 12px rgba(255, 90, 82, 0.18), 0 0 18px rgba(255, 90, 82, 0.3);
-}
-
+/* ---- buttons (raised metal) -------------------------------------------- */
+.btn-primary,
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 14px;
+  gap: 8px;
   border-radius: var(--r-control);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  background: transparent;
   font-family: var(--font-ui);
-  font-size: 0.74rem;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+  border: 1px solid var(--silver-edge);
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--silver-hi), var(--silver-2) 55%, var(--silver-3));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
+.btn-primary {
+  padding: 11px 20px;
+  font-size: 0.78rem;
+}
+
+.btn-ghost {
+  padding: 9px 14px;
+  font-size: 0.72rem;
+}
+
+.btn-primary:hover,
 .btn-ghost:hover {
-  color: var(--vfd);
-  border-color: var(--hairline);
-  background: rgba(61, 240, 196, 0.06);
+  filter: brightness(1.05);
 }
 
-.btn-ghost:focus-visible,
-.btn-danger:focus-visible {
-  outline: 2px solid var(--vfd);
+.btn-primary:active,
+.btn-ghost:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible {
+  outline: 2px solid var(--neon);
   outline-offset: 3px;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  color: var(--neon-hot);
+  border-color: var(--neon);
+  background: linear-gradient(180deg, #1b2733, #0d1822);
+  box-shadow: inset 0 0 14px var(--neon-dim), 0 0 16px var(--neon-soft);
+  text-shadow: 0 0 8px var(--neon-soft);
+}
+
+.btn-danger:hover {
+  filter: brightness(1.15);
 }
 
 /* ---- RMS meter ---------------------------------------------------------- */
@@ -498,32 +546,32 @@ body {
   gap: 4px;
   padding: 10px;
   border-radius: var(--r-control);
-  background: #030a08;
-  border: 1px solid #0e2420;
-  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.8);
+  background: var(--glass);
+  border: 1px solid #04222e;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .meter-segment {
   flex: 1;
   height: 14px;
   border-radius: var(--r-seg);
-  background: var(--vfd-dim);
+  background: var(--neon-dim);
   transition: background 0.1s ease, box-shadow 0.1s ease;
 }
 
 .meter-segment.lit {
-  background: var(--vfd);
-  box-shadow: 0 0 8px var(--glow);
+  background: var(--neon);
+  box-shadow: 0 0 8px var(--neon-soft);
 }
 
 .meter-segment.lit.warn {
   background: var(--warning);
-  box-shadow: 0 0 8px rgba(255, 176, 0, 0.55);
+  box-shadow: 0 0 8px rgba(255, 209, 102, 0.5);
 }
 
 .meter-segment.lit.danger {
   background: var(--danger);
-  box-shadow: 0 0 10px rgba(255, 90, 82, 0.6);
+  box-shadow: 0 0 10px rgba(255, 106, 94, 0.6);
 }
 
 /* ---- forms -------------------------------------------------------------- */
@@ -539,7 +587,7 @@ body {
 }
 
 .input-label {
-  color: var(--text-secondary);
+  color: var(--ink-2);
   font-size: 0.74rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -550,13 +598,14 @@ select,
 input[type='number'] {
   width: 100%;
   border-radius: var(--r-control);
-  border: 1px solid var(--border);
-  background: #030a08;
-  color: var(--text-primary);
+  border: 1px solid #04222e;
+  background: var(--glass);
+  color: var(--neon-hot);
   font-family: var(--font-ui);
   padding: 11px 12px;
   font-size: 0.92rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 select {
@@ -572,71 +621,71 @@ input[type='number'] {
 select:focus-visible,
 input[type='number']:focus-visible {
   outline: none;
-  border-color: var(--vfd);
-  box-shadow: 0 0 0 2px rgba(61, 240, 196, 0.3);
+  border-color: var(--neon);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 0 2px var(--neon-soft);
 }
 
 input[type='range'] {
   width: 100%;
-  accent-color: var(--vfd);
+  accent-color: var(--neon);
   background: transparent;
 }
 
 input[type='range']:focus-visible {
-  outline: 2px solid var(--vfd);
+  outline: 2px solid var(--neon);
   outline-offset: 4px;
 }
 
 input[type='range']::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: #0a1c18;
-  border: 1px solid var(--border);
+  background: var(--glass);
+  border: 1px solid #04222e;
 }
 
 input[type='range']::-webkit-slider-thumb {
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
-  background: var(--vfd);
-  box-shadow: 0 0 10px var(--glow);
-  margin-top: -6px;
+  background: linear-gradient(180deg, var(--silver-hi), var(--silver-3));
+  border: 1px solid var(--silver-edge);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  margin-top: -7px;
 }
 
 input[type='range']::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: #0a1c18;
-  border: 1px solid var(--border);
+  background: var(--glass);
+  border: 1px solid #04222e;
 }
 
 input[type='range']::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--silver-edge);
   border-radius: 999px;
-  background: var(--vfd);
-  box-shadow: 0 0 10px var(--glow);
+  background: linear-gradient(180deg, var(--silver-hi), var(--silver-3));
 }
 
 /* ---- text helpers ------------------------------------------------------- */
 .caption {
-  color: var(--text-secondary);
+  color: var(--ink-2);
   font-size: 0.82rem;
   line-height: 1.5;
 }
 
 .readout-value {
   font-family: var(--font-ui);
-  color: var(--vfd);
-  text-shadow: 0 0 10px var(--glow-soft);
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .small-label {
   display: flex;
   justify-content: space-between;
-  color: var(--text-secondary);
+  color: #5f7c8c;
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -657,13 +706,11 @@ input[type='range']::-moz-range-thumb {
 .waveform-stage {
   position: relative;
   overflow: hidden;
-  border-radius: var(--r-panel);
+  border-radius: var(--r-control);
   padding: 20px;
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(61, 240, 196, 0.06), transparent 55%),
-    linear-gradient(180deg, var(--glass-edge), var(--glass) 30%);
-  border: 1px solid #0e2420;
-  box-shadow: inset 0 2px 22px rgba(0, 0, 0, 0.85);
+  background: var(--glass);
+  border: 1px solid #04222e;
+  box-shadow: inset 0 2px 16px rgba(0, 0, 0, 0.85);
 }
 
 .waveform-stage::after {
@@ -676,20 +723,20 @@ input[type='range']::-moz-range-thumb {
     0deg,
     rgba(0, 0, 0, 0) 0px,
     rgba(0, 0, 0, 0) 2px,
-    rgba(0, 0, 0, 0.16) 3px
+    rgba(0, 0, 0, 0.22) 3px
   );
 }
 
 .waveform-line {
-  stroke: var(--vfd);
-  filter: drop-shadow(0 0 6px var(--glow));
+  stroke: var(--neon);
+  filter: drop-shadow(0 0 6px var(--neon-soft));
 }
 
 .waveform-grid {
-  stroke: var(--hairline);
+  stroke: var(--neon-dim);
 }
 
-/* ---- reduced motion (mandatory, 6.B) ------------------------------------ */
+/* ---- reduced motion ----------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .vfd-power .vfd-glass {
     animation: none;
