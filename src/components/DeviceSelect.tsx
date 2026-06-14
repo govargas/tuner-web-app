@@ -42,7 +42,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
     <fieldset className="panel">
       <legend className="panel-title">Input device</legend>
 
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="mt-3 flex flex-col gap-3">
         <div className="flex-1">
           <label htmlFor={selectId} className="sr-only">
             Select microphone
@@ -76,7 +76,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
             <button
               type="button"
               onClick={promptPermission}
-              className="btn-primary btn-danger"
+              className="btn-primary"
               aria-describedby="device-help"
             >
               Reveal labels

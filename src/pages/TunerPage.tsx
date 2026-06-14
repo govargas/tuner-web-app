@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAudioGraph } from '../audio/useAudioGraph'
 import { usePitch } from '../audio/usePitch'
 import A4Control from '../components/A4Control'
 import DeviceSelect from '../components/DeviceSelect'
 import { useAppStore } from '../state/useAppStore'
 import { useToastStore } from '../state/useToastStore'
+
+// Cents strobe: odd count so there is a true center segment at 0 cents.
+const STROBE_SEGMENTS = 41
+const STROBE_CENTER = (STROBE_SEGMENTS - 1) / 2
 
 export default function TunerPage() {
   const a4 = useAppStore((s) => s.a4)
@@ -16,6 +20,19 @@ export default function TunerPage() {
   const totalSegments = 28
   const rmsNormalized = Math.min(1, rms * 5)
   const activeSegments = Math.round(rmsNormalized * totalSegments)
+
+  // Power-on sweep when the mic engages (motion: state transition feedback).
+  const [powerOn, setPowerOn] = useState(false)
+  const prevRunning = useRef(running)
+  useEffect(() => {
+    if (running && !prevRunning.current) {
+      setPowerOn(true)
+      const t = setTimeout(() => setPowerOn(false), 700)
+      prevRunning.current = running
+      return () => clearTimeout(t)
+    }
+    prevRunning.current = running
+  }, [running])
 
   useEffect(() => {
     if (!ready || !analyser) return
@@ -32,17 +49,27 @@ export default function TunerPage() {
     return () => cancelAnimationFrame(raf)
   }, [ready, analyser])
 
+  const hasSignal = pitch.cents != null && pitch.note != null
   const cents = pitch.cents ?? 0
-  const centsPct = Math.max(0, Math.min(100, ((cents + 50) / 100) * 100))
   const confidencePct = Math.max(0, Math.min(100, Math.round((pitch.confidence ?? 0) * 100)))
 
+  // Which strobe segment the current cents value points at.
+  const pointer = Math.round(((cents + 50) / 100) * (STROBE_SEGMENTS - 1))
+  const inTune = hasSignal && Math.abs(cents) <= 5
+
   return (
-    <div className="space-y-6">
-      <section aria-labelledby="tuner-heading" className="panel">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 id="tuner-heading" className="panel-title">
-            Tuner
-          </h2>
+    <div>
+      <section
+        aria-labelledby="tuner-heading"
+        className={`instrument ${powerOn ? 'vfd-power' : ''}`}
+      >
+        <div className="instrument-head">
+          <div className="flex items-baseline gap-3">
+            <h2 id="tuner-heading" className="instrument-label">
+              Tuner
+            </h2>
+            <span className="caption">Real-time pitch detection</span>
+          </div>
           {!running ? (
             <button onClick={start} className="btn-primary">
               Start mic
@@ -53,10 +80,77 @@ export default function TunerPage() {
             </button>
           )}
         </div>
-        <p className="caption mt-2">
-          Activate the microphone to begin real-time pitch detection. The UI mirrors classic VFD
-          tuner hardware with clear focus outlines for keyboard navigation.
-        </p>
+
+        <div
+          className={`vfd-glass ${hasSignal ? '' : 'vfd-idle'}`}
+          role="group"
+          aria-labelledby="pitch-heading"
+        >
+          <div className="display-status">
+            <span id="pitch-heading">Pitch · A4 {a4} Hz</span>
+            <span className={running ? 'live' : ''}>
+              {running ? (inTune ? 'In tune' : 'Listening') : 'Standby'}
+            </span>
+          </div>
+
+          <div className="mt-7 flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:justify-center sm:gap-10">
+            <div className="readout vfd-note" aria-hidden="true">
+              <span className="ghost">~~~</span>
+              <span className="live">{pitch.note ?? ''}</span>
+            </div>
+            <div className="flex items-end" aria-hidden="true">
+              <div className="readout vfd-freq">
+                <span className="ghost">888.8</span>
+                <span className="live">{pitch.hz ? pitch.hz.toFixed(1) : ''}</span>
+              </div>
+              <span className="freq-unit">Hz</span>
+            </div>
+            <span className="sr-only" aria-live="polite">
+              {hasSignal
+                ? `${pitch.note}, ${pitch.hz?.toFixed(1)} hertz, ${cents > 0 ? '+' : ''}${Math.round(
+                    cents,
+                  )} cents`
+                : 'No signal'}
+            </span>
+          </div>
+
+          <div className="mt-8">
+            <div className="strobe-scale">
+              <span>-50¢</span>
+              <span className="center">0</span>
+              <span>+50¢</span>
+            </div>
+            <div
+              className="strobe"
+              role="meter"
+              aria-valuemin={-50}
+              aria-valuemax={50}
+              aria-valuenow={cents}
+              aria-label="Cents from target pitch"
+            >
+              {Array.from({ length: STROBE_SEGMENTS }).map((_, idx) => {
+                if (idx === STROBE_CENTER) return <div key={idx} className="strobe-seg center" />
+                const on = hasSignal && idx === pointer
+                const dist = Math.abs(idx - STROBE_CENTER)
+                const near = on && dist <= 2
+                const warn = on && dist >= 12
+                return (
+                  <div
+                    key={idx}
+                    className={`strobe-seg ${on ? 'on' : ''} ${near ? 'near' : ''} ${
+                      warn ? 'warn' : ''
+                    }`}
+                  />
+                )
+              })}
+            </div>
+            <div className="small-label mt-2">
+              <span>Flat</span>
+              <span className="readout-value">{hasSignal ? `Conf ${confidencePct}%` : '--'}</span>
+              <span>Sharp</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <div className="panel-grid">
@@ -79,59 +173,22 @@ export default function TunerPage() {
               return (
                 <div
                   key={idx}
-                  className={`meter-segment ${lit ? 'lit' : ''} ${isDanger ? 'danger' : isWarning ? 'warn' : ''}`}
+                  className={`meter-segment ${lit ? 'lit' : ''} ${
+                    isDanger ? 'danger' : isWarning ? 'warn' : ''
+                  }`}
                 />
               )
             })}
           </div>
           <div className="small-label mt-3">
             <span>RMS</span>
-            <span>dB</span>
-            <span>+50</span>
+            <span className="readout-value">{rms.toFixed(3)}</span>
+            <span>Peak</span>
           </div>
-          <p className="caption mt-2">RMS: {rms.toFixed(3)}</p>
         </section>
 
-        <section className="panel" aria-labelledby="pitch-heading">
-          <div className="flex items-start justify-between">
-            <h3 id="pitch-heading" className="panel-title">
-              Pitch (A4 = {a4} Hz)
-            </h3>
-            <div className="h-1 w-16 rounded-full bg-[rgba(111,243,255,0.4)] shadow-[0_0_10px_rgba(111,243,255,0.55)]" />
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-            <div className="flex items-end gap-4">
-              <div className="vfd-note min-w-[6ch] tabular-nums">{pitch.note ?? '—'}</div>
-              <p className="vfd-freq tabular-nums">
-                {pitch.hz ? `${pitch.hz.toFixed(1)} Hz` : '000.0 Hz'}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center justify-between text-[0.8rem] text-[var(--text-secondary)] mb-2">
-              <span>−50¢</span>
-              <span>In tune</span>
-              <span>+50¢</span>
-            </div>
-            <div
-              className="tuning-track"
-              role="meter"
-              aria-valuemin={-50}
-              aria-valuemax={50}
-              aria-valuenow={cents}
-            >
-              <div className="tuning-thumb" style={{ left: `${centsPct}%` }} />
-            </div>
-          </div>
-
-          <p className="caption mt-3">Confidence: {confidencePct}%</p>
-        </section>
-      </div>
-
-      <div className="panel-grid">
         <A4Control />
+
         <DeviceSelect
           onAfterPermission={() => {
             useToastStore.getState().push('Device labels updated')

@@ -45,7 +45,7 @@ export default function A4Control() {
         </div>
       </div>
       <p className="caption mt-2">
-        Sets the tuning standard for note calculations (range 432–446 Hz).
+        Sets the tuning standard for note calculations (range 432-446 Hz).
       </p>
     </fieldset>
   )

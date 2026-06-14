@@ -9,7 +9,7 @@ export default function App() {
     <div className="app-surface">
       <header className="app-header">
         <div className="brand" aria-label="Tuner home">
-          <div className="h-4 w-4 rounded-full bg-[rgba(111,243,255,0.5)] shadow-[0_0_12px_rgba(111,243,255,0.6)]" />
+          <span className="brand-led" aria-hidden="true" />
           <h1 className="brand-title">TUNER</h1>
         </div>
         <nav aria-label="Main" className="nav">
