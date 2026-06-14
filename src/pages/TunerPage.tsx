@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useAudioGraph } from '../audio/useAudioGraph'
 import { usePitch } from '../audio/usePitch'
 import A4Control from '../components/A4Control'
@@ -10,8 +10,14 @@ import { useToastStore } from '../state/useToastStore'
 const STROBE_SEGMENTS = 41
 const STROBE_CENTER = (STROBE_SEGMENTS - 1) / 2
 
+// WebGL is code-split: a static brushed-silver chassis plate + a reflective
+// metal knob. Both fall back to CSS silver if the chunk/WebGL is unavailable.
+const MetalKnob = lazy(() => import('../three/MetalKnob'))
+const MetalPlate = lazy(() => import('../three/MetalPlate'))
+
 export default function TunerPage() {
   const a4 = useAppStore((s) => s.a4)
+  const setA4 = useAppStore((s) => s.setA4)
   const deviceId = useAppStore((s) => s.deviceId)
   const { start, stop, running, ready, analyser, audioCtx, source } = useAudioGraph(deviceId)
   const [rms, setRms] = useState(0)
@@ -63,6 +69,10 @@ export default function TunerPage() {
         aria-labelledby="tuner-heading"
         className={`instrument ${powerOn ? 'vfd-power' : ''}`}
       >
+        <Suspense fallback={null}>
+          <MetalPlate />
+        </Suspense>
+        <div className="instrument-content">
         <div className="instrument-head">
           <div className="flex items-baseline gap-3">
             <h2 id="tuner-heading" className="instrument-label">
@@ -81,6 +91,7 @@ export default function TunerPage() {
           )}
         </div>
 
+        <div className="instrument-body">
         <div
           className={`vfd-glass ${hasSignal ? '' : 'vfd-idle'}`}
           role="group"
@@ -150,6 +161,23 @@ export default function TunerPage() {
               <span>Sharp</span>
             </div>
           </div>
+        </div>
+
+          <div className="knob-bay">
+            <Suspense
+              fallback={
+                <div
+                  className="metal"
+                  aria-hidden="true"
+                  style={{ width: '100%', height: '150px', borderRadius: '999px' }}
+                />
+              }
+            >
+              <MetalKnob value={a4} min={432} max={446} onChange={setA4} />
+            </Suspense>
+            <span className="knob-label">A4 {a4} Hz</span>
+          </div>
+        </div>
         </div>
       </section>
 
