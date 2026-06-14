@@ -28,7 +28,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
 
   if (!supported) {
     return (
-      <div className="panel">
+      <div className="panel metal">
         <p className="caption">Device selection not supported in this browser.</p>
       </div>
     )
@@ -39,7 +39,7 @@ export default function DeviceSelect({ onAfterPermission }: { onAfterPermission?
   )
 
   return (
-    <fieldset className="panel">
+    <fieldset className="panel metal">
       <legend className="panel-title">Input device</legend>
 
       <div className="mt-3 flex flex-col gap-3">

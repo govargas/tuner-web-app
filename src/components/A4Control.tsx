@@ -8,7 +8,7 @@ export default function A4Control() {
   const setA4 = useAppStore((s) => s.setA4)
 
   return (
-    <fieldset className="panel">
+    <fieldset className="panel metal">
       <legend className="panel-title">Reference pitch</legend>
       <div className="form-shell sm:grid-cols-[1fr_auto] sm:items-center">
         <label htmlFor={sliderId} className="sr-only">
