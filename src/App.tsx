@@ -10,8 +10,8 @@ export default function App() {
         Skip to instrument
       </a>
       <div className="page-caption">
-        <span>Good music starts here.</span>
-        <span>No downloads. Just a microphone.</span>
+        <span>THE MUSIC'S IN YOU - JUST DON'T FORGET 2 TUNE IT UP A LIL' BIT :)</span>
+        <span>No ads, no downloads, no BS.</span>
       </div>
       <main id="instrument" className="receiver">
         <div className="cabinet-top" aria-hidden="true">
@@ -22,9 +22,9 @@ export default function App() {
           <span className="chassis-screw screw-right" aria-hidden="true" />
           <header className="receiver-header">
             <div className="brand">
-              <h1>TUNER</h1>
+              <h1>TALO TUNER</h1>
               <div className="brand-description">
-                Chromatic instrument tuner<span>Vacuum fluorescent display</span>
+                Chromatic instrument tuner<span>Real-time pitch detection</span>
               </div>
             </div>
             <nav aria-label="Main" className="function-selector">

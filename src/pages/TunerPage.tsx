@@ -170,8 +170,8 @@ export default function TunerPage() {
         <span className="note-marker" aria-hidden="true" />
         {error ||
           (running
-            ? 'Play one note and let it ring. Aim for the centre of the scale.'
-            : 'Switch on the microphone, then play a note. We’ll take it from there.')}
+            ? 'Play one note and let it ring. Adjust your tuning until the indicator is centred at 0.'
+            : 'Switch on the microphone, then play a note. Adjust your tuning until the indicator is centred at 0.')}
       </div>
     </section>
   )

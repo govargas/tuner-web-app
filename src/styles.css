@@ -118,9 +118,14 @@ h2 {
   font-size: 12px;
 }
 .page-caption {
+  align-items: baseline;
   margin: 0 4px 24px;
 }
+.page-caption span:last-child {
+  flex-shrink: 0;
+}
 .page-caption span:first-child {
+  line-height: 1.5;
   color: #d3d7cf;
 }
 .receiver {
@@ -193,6 +198,7 @@ h2 {
   gap: 22px;
 }
 .brand h1 {
+  white-space: nowrap;
   font-size: 30px;
   line-height: 1;
   font-weight: 850;
@@ -874,7 +880,8 @@ h2 {
   }
   .brand {
     width: 100%;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 10px 20px;
   }
   .brand h1 {
     font-size: 29px;
