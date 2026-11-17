@@ -46,7 +46,7 @@ export default function App() {
         <div className="cabinet-bottom" aria-hidden="true" />
       </main>
       <footer className="page-footer">
-        <p>Made for listening.</p>
+        <p>Made by Talo Vargas</p>
         <p>Audio stays in your browser.</p>
       </footer>
       <ToastContainer />
