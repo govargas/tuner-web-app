@@ -12,7 +12,9 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       a4: 440,
-      setA4: (v) => set({ a4: Math.min(446, Math.max(432, Math.round(v))) }),
+      setA4: (v) => {
+        if (Number.isFinite(v)) set({ a4: Math.min(446, Math.max(432, Math.round(v))) })
+      },
       deviceId: undefined,
       setDeviceId: (id) => set({ deviceId: id }),
     }),
